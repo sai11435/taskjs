@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="jquery/paginathing.js"></script>
+    <script src="jquery/paginathing.min.js"></script>
+    <style>
+        tr:nth-child(even) { 
+            background-color:lightgrey; 
+        } 
+    </style>
+</head>
+<body>
+    <div style="float: right;">
+        <input type="button" value="edit" class="edit">
+        <input type="button" value="Add | +" class="add" data-toggle="modal" data-target="#myModal">
+    </div>
+    <table border="1px solid black" style="width:100%">
+        <thead style="background:grey;color:white">
+             <tr>
+                <th><input type="checkbox" id="ckbCheckAll"></th>  
+                <th>User Id</th>
+                <th>User Name</th>
+                <th>Email</th>
+              </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+   </table>
+   <input type="button" value="Delete Users" class="delete">
+   <!-- modal form popup start -->
+   <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Form</h4>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" class="id">
+                <input type="text" class="username" placeholder="username">
+                <input type="text" class="email" placeholder="email">
+                <input type="button" value="Save" class="save">
+                <input type="button" value="Update" class="update">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+  </div>
+   <!-- modal form popup end -->
+</body>
+<script>
+    //fetch all data and display in table
+    fetch('https://jsonplaceholder.typicode.com/users')
+  .then((response) => response.json())
+  .then((json) => {
+        $.each(json, function (index, item) {
+            console.log(item);
+            var eachrow = "<tr>"
+                        + "<td><input type='checkbox' class='checkBoxClass' value="+item['id']+"></td>"
+                        + "<td>" + item['id'] + "</td>"
+                        + "<td>" + item['username'] + "</td>"
+                        + "<td>" + item['email'] + "</td>"
+                        + "</tr>";
+            $('#tbody').append(eachrow);
+        })
+        $('#tbody').paginathing({
+            perPage: 5,
+        });
+    })
+  //end
+  //select all checkboxes
+    $("#ckbCheckAll").click(function () {
+        $(".checkBoxClass").prop('checked', $(this).prop('checked'));
+    });
+    //end
+    $(document).on('click','input[type="button"]',function(){
+        var val = $(this).val();
+        //update start
+        if(val=='Update'){
+            var username = $('.username').val();
+            var email = $('.email').val();
+            fetch('https://jsonplaceholder.typicode.com/users/'+$('.id').val(), {
+            method: 'PUT',
+            body: JSON.stringify({
+                username: $('.username').val(),
+                email: $('.email').val(),
+            }),
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
+            })
+            .then((response) => response.json())
+            .then((json) => console.log(json))
+            //update end
+            //save data start
+        }else if(val=='Save'){
+            var username = $('.username').val();
+            var email = $('.email').val();
+            if(username != "" && email !=""){
+                fetch('https://jsonplaceholder.typicode.com/users', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: username,
+                    username: username,
+                    email: email,
+                }),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+                })
+                .then((response) => response.json())
+                .then((json) => console.log(json))
+            }
+            //save data end
+            //delete data start
+        }else if(val == 'Delete Users'){
+            $(".checkBoxClass:checked").each(function(){
+                fetch('https://jsonplaceholder.typicode.com/users/'+$(this).val(), {
+                    method: 'DELETE',
+                })
+                .then((response) => response.json())
+                .then((json) =>
+                    $(this).parents('tr').hide()
+                );
+            });
+            //delete data end
+        }else if(val == 'Add | +'){
+            //show modal pop up 
+            $('.username').val(""),
+            $('.email').val(""),
+            $('.id').val("")
+            $('.update').hide();
+            $('.save').show();
+        }else if(val == 'edit'){
+            // edit data
+            fetch('https://jsonplaceholder.typicode.com/users/'+$(".checkBoxClass:checked").val())
+            .then((response) => response.json())
+            .then(json => {$('#myModal').modal('show'),
+                $('.username').val(json['username']),
+                $('.email').val(json['email']),
+                $('.id').val(json['id'])
+            }
+            )
+            $('.save').hide();
+            $('.update').show();
+        }
+    });
+</script>
+</html>
